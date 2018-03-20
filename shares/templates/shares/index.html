@@ -1,0 +1,9 @@
+{% if shares %}
+    <ul>
+    {% for share in shares %}
+        <li><a href="{% url 'ticker' share.name %}">{{ share.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No shares are available. Please run parser python3 parser.py</p>
+{% endif %}

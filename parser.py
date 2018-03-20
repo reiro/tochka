@@ -27,7 +27,11 @@ class BasicScraper(object):
 		self.pool = Pool(pool_size)
 
 	def convert_date(self, date):
-		d = datetime.datetime.strptime(date, '%m/%d/%Y')
+		try:	
+			d = datetime.datetime.strptime(date, '%m/%d/%Y')
+		except:
+			d = datetime.date.today()
+
 		return d.strftime('%Y-%m-%d')
 
 	def FloatOrZero(self, value):
@@ -35,6 +39,9 @@ class BasicScraper(object):
 	        return float(value)
 	    except:
 	        return 0.0
+
+	def clear_value_format(self, row, num):
+		return row.select('td')[num].get_text().split()[0].replace(',', '')
 
 	def run(self):
 		file = open(self.tickers_path)
@@ -65,11 +72,11 @@ class Scraper(BasicScraper):
 
 			trade_histiry_data = {'share_id': share.id}
 			trade_histiry_data['date'] = self.convert_date(row.select('td')[0].get_text().split()[0])
-			trade_histiry_data['open_value'] = float(row.select('td')[1].get_text().split()[0])
-			trade_histiry_data['high_value'] = float(row.select('td')[2].get_text().split()[0])
-			trade_histiry_data['low_value'] = float(row.select('td')[3].get_text().split()[0])
-			trade_histiry_data['close_value'] = float(row.select('td')[4].get_text().split()[0])
-			trade_histiry_data['volume'] = int(row.select('td')[5].get_text().split()[0].replace(',', ''))
+			trade_histiry_data['open'] = float(self.clear_value_format(row, 1))
+			trade_histiry_data['high'] = float(self.clear_value_format(row, 2))
+			trade_histiry_data['low'] = float(self.clear_value_format(row, 3))
+			trade_histiry_data['close'] = float(self.clear_value_format(row, 4))
+			trade_histiry_data['volume'] = int(self.clear_value_format(row, 5))
 
 			event, created = TradeEvent.objects.get_or_create(**trade_histiry_data)
 
@@ -77,22 +84,31 @@ class Scraper(BasicScraper):
 class InsiderScraper(BasicScraper):
 	def __init__(self, filename):
 		super().__init__(filename)
-		self.page = 1
 		self.scrape_suffix = '/insider-trades'
 
 	def scrape(self, name):
-		share, created = Share.objects.get_or_create(name=name)
+		self.page = 1
+		self.share, created = Share.objects.get_or_create(name=name)
 		url = self.base_uri + name + self.scrape_suffix
 		print('scrapping... ' + url)
 
 		response = requests.get(url)
-		insider_page = bs4.BeautifulSoup(response.text, "html.parser")
-		self.grab_page(insider_page, share)
-		for link in insider_page.select('div#pagerContainer li a'):
-			print('scrapping... ' + link['href'])
-			response = requests.get(link['href'])
-			page = bs4.BeautifulSoup(response.text, "html.parser")
-			self.grab_page(page, share)
+		page = bs4.BeautifulSoup(response.text, "html.parser")
+		self.grab_page(page, self.share)
+
+		link = page.select('a#quotes_content_left_lb_NextPage')[0]
+		self.scrape_recursive(link)
+
+	def scrape_recursive(self, link):
+		self.page += 1
+		print('scrapping... ' + link['href'])
+		response = requests.get(link['href'])
+		page = bs4.BeautifulSoup(response.text, "html.parser")
+		self.grab_page(page, self.share)
+		links = page.select('a#quotes_content_left_lb_NextPage')
+
+		if self.page < 10 and len(links) > 0:
+			self.scrape_recursive(links[0])
 
 	def grab_page(self, page, share):
 		for row in page.select('div.genTable table tr'):
@@ -115,13 +131,13 @@ class InsiderScraper(BasicScraper):
 
 
 if __name__ == '__main__':
-	t1 = datetime.datetime.now()
-	scraper = Scraper('tickers.txt', 3)
-	scraper.run()
-	t2 = datetime.datetime.now()
-	print(t2 - t1)
+	if len(sys.argv) == 2:
+		threads_count = int(sys.argv[1])
+	else:
+		threads_count = 1
 
-	# insider_scraper = InsiderScraper('tickers.txt')
-	# insider_scraper.run()
-	# pdb.set_trace()
-	# scraper.scrape_share_trade_history('CVX')
+	scraper = Scraper('tickers.txt', threads_count)
+	scraper.run()
+
+	insider_scraper = InsiderScraper('tickers.txt')
+	insider_scraper.run()

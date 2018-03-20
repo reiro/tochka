@@ -1,0 +1,43 @@
+<p><a href="{% url 'ticker' share.name %}">{{ share }}</a></p>
+<p><a href="{% url 'insider' share.name %}">Insider Trades</a></p>
+
+<table style="width: 100%;">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Date</th>
+            <th>Open</th>
+            <th>High</th>
+            <th>Low</th>
+            <th>Close / Last</th>
+            <th>Volume</th>
+        </tr>
+    </thead>
+    <tbody style="text-align:  center;">
+    	{% for event in trade_events %}
+	        <tr>
+	            <td>
+	                {{ event.id }}
+	            </td>
+	            <td>
+	                {{ event.date }}
+	            </td>
+	            <td>
+	                {{ event.open }}
+	            </td>
+	            <td>
+	                {{ event.high }}
+	            </td>
+	            <td>
+	                {{ event.low }}
+	            </td>
+	            <td>
+	                {{ event.close }}
+	            </td>
+	            <td>
+	                {{ event.volume }}
+	            </td>
+	        </tr>
+        {% endfor %}
+    </tbody>
+</table>

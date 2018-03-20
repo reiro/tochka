@@ -1,0 +1,10 @@
+<p><a href="{% url 'ticker' share.name %}">{{ share }}</a></p>
+
+<p>Value is {{ value }}</p>
+<p>Type is {{ type }}</p>
+
+<ul>
+{% for period in periods %}
+    <li>{{ period.date }} - {{period.previous_date}} - (Diff: {{ period.value }} - {{ period.previous_value }})</li>
+{% endfor %}
+</ul>

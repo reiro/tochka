@@ -1,0 +1,8 @@
+<p><a href="{% url 'ticker' share.name %}">{{ share }}</a></p>
+<p>Dates range: {{ date_from }} - {{ date_to }}</p>
+
+<p>Difference in Open: {{ diff.open }}</p>
+<p>Difference in High: {{ diff.high }}</p>
+<p>Difference in Low: {{ diff.low }}</p>
+<p>Difference in Close: {{ diff.close }}</p>
+<p>Difference in Volume: {{ diff.volume }}</p>

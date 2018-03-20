@@ -1,5 +1,4 @@
 import datetime
-
 from django.db import models
 from django.utils import timezone
 
@@ -14,10 +13,10 @@ class TradeEvent(models.Model):
     share = models.ForeignKey(Share, on_delete=models.CASCADE)
     date = models.DateField()
     volume = models.IntegerField(default=0)
-    open_value = models.FloatField(default=0.)
-    high_value = models.FloatField(default=0.)
-    low_value = models.FloatField(default=0.)
-    close_value = models.FloatField(default=0.)
+    open = models.FloatField(default=0.)
+    high = models.FloatField(default=0.)
+    low = models.FloatField(default=0.)
+    close = models.FloatField(default=0.)
 
     def __str__(self):
         return "{}: {} - Volume: {}".format(self.share.name, self.date, self.volume)
@@ -40,4 +39,4 @@ class InsiderTradeEvent(models.Model):
     last_price = models.FloatField(default=0.)
 
     def __str__(self):
-        return str(self.id)
+        return "{}: {} - type: {}".format(self.share.name, self.date, self.transaction_type)
